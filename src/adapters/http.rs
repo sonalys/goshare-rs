@@ -6,7 +6,8 @@ use uuid::Uuid;
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 
 use crate::repositories::GroupRepository;
-use crate::{adapters, application, domain, repositories};
+use crate::{application, domain, repositories};
+
 
 #[derive(Deserialize)]
 pub struct CreateGroupDto {
@@ -117,9 +118,7 @@ pub async fn get_balances<R: repositories::GroupRepository + 'static>(
     }
 }
 
-use crate::application::LedgerService;
-
-pub async fn run_server<R: GroupRepository + 'static>(ledger_service: Arc<LedgerService<R>>) -> Result<(), std::io::Error> {
+pub async fn run_server<R: GroupRepository + 'static>(ledger_service: Arc<application::LedgerService<R>>) -> Result<(), std::io::Error> {
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(ledger_service.clone()))
@@ -132,7 +131,10 @@ pub async fn run_server<R: GroupRepository + 'static>(ledger_service: Arc<Ledger
 
 pub fn configure_routes<R: GroupRepository + 'static>(cfg: &mut web::ServiceConfig) {
      cfg
-        .route("/groups", web::post().to(create_group::<R>))
+        .route(
+            "/groups", 
+            web::post().to(create_group::<R>),
+        )
         .route(
             "/groups/{group_id}/members",
             web::post().to(add_member::<R>),
